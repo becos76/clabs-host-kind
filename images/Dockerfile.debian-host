@@ -1,0 +1,24 @@
+# Image with systemd, ssh server and an admin user
+
+FROM debian:bookworm-slim
+ENV DEBIAN_FRONTEND=noninteractive \
+    DIST=debian
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+
+# Install required systemd packages and add some more :)
+RUN apt-get -qq update && \
+  apt-get -qq --no-install-recommends install \
+  systemd systemd-sysv dbus dbus-user-session \
+  iproute2 net-tools openssh-server sudo nano curl iperf3 vim-tiny iputils-ping tcpdump traceroute \
+  ifupdown2 netcat-openbsd && \
+  apt-get -qq clean && \
+  rm -rf /var/lib/apt/lists/*
+
+# Configure the user, password and sudo
+# RUN useradd -rm -d /home/admin -s /bin/bash -g root -G sudo admin
+RUN useradd -rm -d /home/admin -s /bin/bash -G sudo admin && \
+  echo 'admin:admin' | chpasswd && \
+  ex +"%s/^%sudo.*$/%sudo ALL=(ALL:ALL) NOPASSWD:ALL/g" -scwq! /etc/sudoers
+
+COPY docker-entrypoint.sh /docker-entrypoint.sh
+ENTRYPOINT ["/docker-entrypoint.sh"]

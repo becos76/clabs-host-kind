@@ -1,0 +1,63 @@
+name: hosts
+prefix: __lab-name
+mgmt:
+  network: host-mgmt
+  ipv4-subnet: 172.20.20.0/24
+
+topology:    
+  nodes:    
+    host1:
+      kind: linux
+      image: clabs-host:ubuntu
+      labels: 
+        dist: ubuntu
+      cmd: journalctl -f
+      binds:
+        - configs/interfaces.host1:/etc/network/interfaces
+        - configs/aliases.all:/etc/profile.d/00-aliases.sh
+      mgmt-ipv4: 172.20.20.51
+      healthcheck:
+        start-period: 0
+        interval: 30
+        timeout: 30
+        retries: 3
+        test:
+          - CMD-SHELL
+          # - nc -vz localhost 22 
+          - test -f "/run/sshd.pid"
+      stages:
+        healthy:
+          exec:
+            on-exit:
+            - ifupdown ifup -a
+
+    host2:
+      kind: linux
+      image: clabs-host:debian
+      labels: 
+        dist: debian
+      cmd: journalctl -f
+      binds:
+        - configs/interfaces.host2:/etc/network/interfaces
+        - configs/aliases.all:/etc/profile.d/shell-aliases.sh
+      mgmt-ipv4: 172.20.20.52
+      healthcheck:
+        start-period: 0
+        interval: 30
+        timeout: 30
+        retries: 3
+        test:
+          - CMD-SHELL
+         # - nc -vz localhost 22 
+          - test -f "/run/sshd.pid"
+      stages:
+        healthy:
+          exec:
+            on-exit:
+              - ifreload -a
+
+
+  links:
+    - endpoints: ["host2:eth1", "host1:eth1"]
+    - endpoints: ["host2:eth2", "host1:eth2"]
+    
