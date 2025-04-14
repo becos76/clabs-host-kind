@@ -28,8 +28,8 @@ topology:
       stages:
         healthy:
           exec:
-            on-exit:
-            - ifupdown ifup -a
+            - command: ifupdown ifup -a
+              phase: on-exit
 
     host2:
       kind: linux
@@ -53,10 +53,9 @@ topology:
       stages:
         healthy:
           exec:
-            on-exit:
-              - ifreload -a
-
-
+            - command: ifreload -a
+              phase: on-exit
+              
   links:
     - endpoints: ["host2:eth1", "host1:eth1"]
     - endpoints: ["host2:eth2", "host1:eth2"]
